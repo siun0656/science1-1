@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>혼합물을 분리해서 원하는 물질을 얻자!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic:wght@400;700;800&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+      font-family: 'Jua', 'Nanum Gothic', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+
+    #game-wrapper {
+      width: 100%;
+      max-width: 680px;
+      background: #ffffff;
+      border: 5px solid #2d3436;
+      border-radius: 28px;
+      box-shadow: 0 14px 0 #2d3436, 0 22px 35px rgba(0,0,0,0.25);
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Jua', 'Malgun Gothic', sans-serif;
+      color: #2d3436;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1f2f6;
+      border: 2px solid #ced6e0;
+      border-radius: 18px;
+      padding: 8px 16px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #2f3542;
+    }
+    .badge-stage {
+      background: #e17055;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    .screen {
+      display: none;
+      animation: popIn 0.25s ease-out;
+    }
+    .screen.active {
+      display: block;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .intro-box {
+      background: #fff9e6;
+      border: 3px dashed #e67e22;
+      border-radius: 18px;
+      padding: 15px;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #2c3e50;
+      margin: 12px 0;
+      font-family: 'Nanum Gothic', 'Malgun Gothic', sans-serif;
+    }
+    .intro-box strong { color: #d35400; }
+
+    .quest-banner {
+      background: #ffeaa7;
+      border: 3px solid #fdcb6e;
+      border-radius: 18px;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    .quest-title {
+      font-size: 22px;
+      color: #d35400;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .choice-card {
+      background: #f8f9fa;
+      border: 3px solid #b2bec3;
+      border-radius: 16px;
+      padding: 12px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 0 #b2bec3;
+      transition: transform 0.1s;
+    }
+    .choice-card:hover { border-color: #0984e3; }
+    .choice-card:active { transform: translateY(3px); box-shadow: 0 1px 0 #b2bec3; }
+    .choice-icon { font-size: 42px; margin-bottom: 4px; }
+    .choice-name { font-size: 17px; color: #2f3542; }
+
+    .feedback-msg {
+      min-height: 24px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #d63031;
+    }
+    .shake { animation: shake 0.35s; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .minigame-box {
+      background: #f8f9fa;
+      border: 3px solid #ced6e0;
+      border-radius: 20px;
+      padding: 14px 10px;
+      margin: 10px 0;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      touch-action: none;
+    }
+
+    .meter-wrap {
+      width: 100%;
+      max-width: 360px;
+      background: #dfe6e9;
+      height: 18px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid #b2bec3;
+      margin-top: 8px;
+    }
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff7675, #e17055);
+      transition: width 0.15s ease;
+    }
+
+    /* 1. 타이밍 바 */
+    .timing-track {
+      width: 100%;
+      max-width: 350px;
+      height: 42px;
+      background: #dfe6e9;
+      border-radius: 22px;
+      position: relative;
+      overflow: hidden;
+      border: 3px solid #2d3436;
+      margin: 15px 0;
+    }
+    .timing-zone-safe {
+      position: absolute;
+      top: 0; left: 35%; width: 30%; height: 100%;
+      background: #00b894;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .timing-needle {
+      position: absolute;
+      top: 0; left: 0%; width: 16px; height: 100%;
+      background: #d63031;
+      border: 2px solid #ffffff;
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    /* 2. 글씨 필드 */
+    .word-hunt-arena {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 200px;
+      background: #ffeaa7;
+      border: 3px solid #fdcb6e;
+      border-radius: 18px;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .hunt-word {
+      position: absolute;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #ffffff !important;
+      border: 2px solid #2d3436 !important;
+      color: #2d3436 !important;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.05s;
+    }
+    .hunt-word:active { transform: scale(1.2); }
+
+    /* 3. 새우튀김 타이밍 팬 */
+    .fry-pan {
+      position: relative;
+      width: 240px;
+      height: 150px;
+      background: #2d3436;
+      border: 6px solid #636e72;
+      border-radius: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: inset 0 0 20px rgba(255, 165, 2, 0.4);
+    }
+    .oil-bubbles {
+      font-size: 13px;
+      font-weight: bold;
+      color: #ffa502;
+      margin-top: 4px;
+      animation: pulseOil 0.6s infinite alternate;
+    }
+    @keyframes pulseOil { from { opacity: 0.5; } to { opacity: 1; } }
+
+    /* 4. 자전거 9조각 퍼즐 */
+    .puzzle-9-board {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      grid-template-rows: repeat(3, 60px);
+      gap: 2px;
+      background: #2c3e50;
+      border: 3px solid #34495e;
+      border-radius: 14px;
+      padding: 4px;
+      margin: 6px auto;
+    }
+    .puzzle-slot-9 {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px dashed rgba(255, 255, 255, 0.35);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .puzzle-slot-9.filled {
+      border: none;
+      background: #ffffff;
+    }
+    .puzzle-tray-9 {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-width: 440px;
+      justify-content: center;
+      padding: 6px;
+      background: #dfe6e9;
+      border-radius: 14px;
+      border: 2px dashed #b2bec3;
+      margin-top: 6px;
+    }
+    .tray-piece-9 {
+      width: 78px;
+      height: 58px;
+      border: 2px solid #0984e3;
+      border-radius: 6px;
+      cursor: grab;
+      touch-action: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      background-size: 240px 180px;
+      position: relative;
+    }
+    .tray-piece-9:active { cursor: grabbing; z-index: 999; }
+
+    /* 5. 바느질 곡선 캔버스 */
+    .stitch-canvas-wrap {
+      position: relative;
+      width: 360px;
+      height: 180px;
+      background: #74b9ff;
+      border: 4px solid #0984e3;
+      border-radius: 20px;
+      touch-action: none;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    /* 6. 레모네이드 비율 계량 스테이션 스타일 */
+    .recipe-board {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      background: #ffffff;
+      border: 2px solid #fdcb6e;
+      border-radius: 14px;
+      padding: 6px 14px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .pour-station {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 170px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .jug-target {
+      position: relative;
+      width: 120px;
+      height: 145px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 4px solid #f39c12;
+      border-radius: 16px 16px 28px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      overflow: hidden;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+    .jug-liquid {
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(180deg, #f1c40f, #f39c12);
+      transition: height 0.25s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .drag-piece {
+      width: 65px;
+      height: 65px;
+      background: #ffffff;
+      border: 3px solid #0984e3;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: grab;
+      touch-action: none;
+      box-shadow: 0 4px 0 #0984e3;
+      font-size: 28px;
+      position: relative;
+      z-index: 20;
+    }
+    .drag-piece:active { cursor: grabbing; }
+
+    .btn-main {
+      background: #00b894;
+      color: white;
+      border: 3px solid #2d3436;
+      border-radius: 16px;
+      padding: 12px 28px;
+      font-family: inherit;
+      font-size: 19px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #2d3436;
+      transition: 0.1s;
+      margin-top: 10px;
+      display: inline-block;
+    }
+    .btn-main:active { transform: translateY(3px); box-shadow: 0 2px 0 #2d3436; }
+
+    .reward-card {
+      background: #fff;
+      border: 3px solid #00cec9;
+      border-radius: 20px;
+      padding: 14px;
+      margin: 12px 0;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+    }
+    .reward-icon { font-size: 70px; margin-bottom: 6px; animation: bounce 1.2s infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid #b2bec3;
+      font-family: 'Nanum Gothic', 'Malgun Gothic', sans-serif;
+    }
+    .summary-table th, .summary-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #dfe6e9;
+      text-align: center;
+    }
+    .summary-table th {
+      background: #ffeaa7;
+      font-family: 'Jua', 'Malgun Gothic', sans-serif;
+      font-size: 14px;
+      color: #2d3436;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-wrapper">
+
+    <!-- 상단 진행 바 -->
+    <div class="top-bar" id="top-bar" style="display:none;">
+      <span class="badge-stage" id="stage-badge">1단계 / 6단계</span>
+      <span>🔬 진짜 손맛 분리 & 자전거 퍼즐 실험실</span>
+    </div>
+
+    <!-- 1. 시작 화면 -->
+    <div id="screen-intro" class="screen active">
+      <div style="font-size:55px; margin-bottom:6px;">🎋🌊🫘🪨</div>
+      <h1>혼합물을 분리해서<br>원하는 물질을 얻자!</h1>
+      <p style="color:#636e72; font-size:15px; margin-top:4px;">초등 5-2 과학 [혼합물의 분리]</p>
+
+      <div class="intro-box">
+        🤔 <strong>우리는 왜 혼합물을 분리할까요?</strong><br>
+        자연에 있는 물질은 대부분 여러 가지가 섞인 <strong>혼합물</strong>이에요.<br>
+        자전거를 조립하거나 맛있는 음식을 만들려면, <u>혼합물에서 꼭 필요한 물질만을 과학적인 방법으로 쏙쏙 분리</u>해야 합니다!<br><br>
+        🎮 <strong>신나는 손맛 액션!</strong><br>
+        • <strong>온도 조절:</strong> 정밀한 타이밍 바 조절로 사탕수수 졸이기!<br>
+        • <strong>글자 사냥:</strong> 똑같이 생긴 글씨 중 진짜 <strong>'기름'</strong> 글자 낚아채기!<br>
+        • <strong>새우튀김:</strong> 팬에 넣었다가 딱 황금빛일 때 건져내는 튀김 요리!<br>
+        • <strong>작아진 용광로:</strong> 위아래로 슥슥 움직이는 미니 용광로에 석탄 쏙 골인!<br>
+        • <strong>자전거 9조각 퍼즐:</strong> 힌트 숫자 없이 그림을 보고 맞추는 <strong>직소 퍼즐</strong>!<br>
+        • <strong>비율 계량 레모네이드:</strong> 레몬즙 2컵 + 맑은 물 4컵을 맞춰 붓는 황금 비율 음료!
+      </div>
+
+      <button class="btn-main" onclick="startGame()">실험실 입장하기! 🚀</button>
+    </div>
+
+    <!-- 2. 혼합물 퀴즈 선택 화면 -->
+    <div id="screen-choose" class="screen">
+      <div class="quest-banner">
+        <div style="font-size:13px; color:#636e72; font-weight:bold;">미션 목표</div>
+        <div class="quest-title" id="quest-target-text">설탕을(를) 얻어야 해! 🍬</div>
+      </div>
+
+      <h3 id="quest-question">어떤 혼합물에서 분리할 수 있을까요?</h3>
+      <div class="choice-grid" id="choice-container"></div>
+      <div class="feedback-msg" id="feedback-msg"></div>
+    </div>
+
+    <!-- 3. 분리 모션 화면 -->
+    <div id="screen-separate" class="screen">
+      <div class="quest-banner" style="background:#e8f4f8; border-color:#74b9ff;">
+        <div class="quest-title" style="color:#0984e3;" id="sep-title">분리 모션 미션</div>
+        <div style="font-size:13px; color:#57606f; margin-top:3px;" id="sep-guide">안내 문구</div>
+      </div>
+
+      <div class="minigame-box" id="sep-minigame-area"></div>
+
+      <div class="meter-wrap">
+        <div class="meter-fill" id="sep-meter-fill"></div>
+      </div>
+      <div id="sep-meter-text" style="font-size:14px; font-weight:bold; color:#2d3436; margin-top:6px;">진행률: 0%</div>
+    </div>
+
+    <!-- 4. 활용 및 퍼즐 조립 화면 -->
+    <div id="screen-craft" class="screen">
+      <div class="quest-banner" style="background:#e8f8f5; border-color:#55efc4;">
+        <div class="quest-title" style="color:#00b894;" id="craft-title">활용 제작 미션</div>
+        <div style="font-size:13px; color:#57606f; margin-top:3px;" id="craft-guide">안내 문구</div>
+      </div>
+
+      <div class="minigame-box" id="craft-minigame-area"></div>
+
+      <div class="meter-wrap" id="craft-meter-wrap">
+        <div class="meter-fill" id="craft-meter-fill" style="background:linear-gradient(90deg, #55efc4, #00b894);"></div>
+      </div>
+      <div id="craft-meter-text" style="font-size:14px; font-weight:bold; color:#2d3436; margin-top:6px;">제작 완료율: 0%</div>
+    </div>
+
+    <!-- 5. 성공 리워드 화면 -->
+    <div id="screen-success" class="screen">
+      <h2>🎉 제작 완성!</h2>
+
+      <div class="reward-card">
+        <div class="reward-icon" id="reward-icon">🎂</div>
+        <h3 id="reward-name" style="font-size:24px; color:#2d3436;">달콤한 케이크</h3>
+        <p style="font-size:14px; color:#636e72; line-height:1.6; margin-top:8px; font-family:'Nanum Gothic', sans-serif;" id="reward-desc"></p>
+      </div>
+
+      <button class="btn-main" onclick="nextStage()">다음 미션으로! ➡️</button>
+    </div>
+
+    <!-- 6. 최종 배움공책 정리 표 -->
+    <div id="screen-ending" class="screen">
+      <div style="font-size:50px;">🏆🎓</div>
+      <h2>6대 분리 미션 완전 정복!</h2>
+      <p style="color:#636e72; font-size:14px;">혼합물을 분리하여 얻은 소중한 물질들을 배움공책에 정리해 보세요.</p>
+
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>혼합물 원료</th>
+            <th>분리한 물질</th>
+            <th>만든 생활 물건</th>
+          </tr>
+        </thead>
+        <tbody id="summary-body"></tbody>
+      </table>
+
+      <div class="intro-box" style="text-align:center;">
+        🌟 <strong>[오늘의 배움 정리]</strong><br>
+        <strong>혼합물을 분리하는 까닭:</strong><br>
+        우리 생활에 <u>필요한 물질을 얻어 편리하고 유용하게 활용하기 위해서</u>입니다!
+      </div>
+
+      <button class="btn-main" onclick="restartGame()">처음부터 다시 하기 🔄</button>
+    </div>
+
+  </div>
+
+  <script>
+    // 6단계 미션 데이터
+    const stages = [
+      {
+        targetItem: "설탕",
+        targetIcon: "🍬",
+        sourceItem: "사탕수수",
+        options: [
+          { name: "사탕수수", icon: "🎋", correct: true },
+          { name: "콩(대두)", icon: "🫘", correct: false },
+          { name: "목화솜", icon: "☁️", correct: false },
+          { name: "바닷물", icon: "🌊", correct: false }
+        ],
+        sepType: "timing_fixed",
+        sepTitle: "사탕수수 즙을 끓여 설탕 만들기!",
+        sepGuide: "바늘이 초록색 '적정온도' 구간에 들어왔을 때 [온도 조절]을 누르세요! (3회 성공)",
+        craftType: "cake_drag",
+        craftTitle: "설탕과 토핑을 끌어다 케이크 완성하기! 🎂",
+        craftGuide: "설탕 시럽, 딸기, 촛불을 손으로 꾹 눌러 케이크의 점선 슬롯으로 끌고 가세요!",
+        rewardName: "달콤한 딸기 케이크 🎂",
+        rewardIcon: "🎂",
+        rewardDesc: "사탕수수(혼합물)에서 단맛을 내는 <strong>설탕</strong>을 분리해냈기 때문에 맛있는 케이크를 완성할 수 있었어요!"
+      },
+      {
+        targetItem: "소금",
+        targetIcon: "🧂",
+        sourceItem: "바닷물",
+        options: [
+          { name: "빗물", icon: "🌧️", correct: false },
+          { name: "바닷물", icon: "🌊", correct: true },
+          { name: "모래사장", icon: "🏖️", correct: false },
+          { name: "우유", icon: "🥛", correct: false }
+        ],
+        sepType: "fan_drag",
+        sepTitle: "염전에서 부채질로 물 증발시키기!",
+        sepGuide: "부채(🪭)를 손으로 꾹 쥐고 좌우로 힘차게 저어 바람을 일으키세요!",
+        craftType: "salt_shake",
+        craftTitle: "소금통을 잡고 배추에 뿌리기! 🥬",
+        craftGuide: "소금통(🧂)을 손으로 잡고 배추 위를 쓱싹 문질러 소금을 절이세요!",
+        rewardName: "맛있는 배추김치 🥬",
+        rewardIcon: "🥬",
+        rewardDesc: "바닷물(혼합물)에서 짠맛을 내는 <strong>소금</strong>을 분리했기 때문에 배추를 절이고 김치를 보관할 수 있어요!"
+      },
+      {
+        targetItem: "식용유(기름)",
+        targetIcon: "🫒",
+        sourceItem: "콩(대두)",
+        options: [
+          { name: "콩(대두)", icon: "🫘", correct: true },
+          { name: "사탕수수", icon: "🎋", correct: false },
+          { name: "바닷물", icon: "🌊", correct: false },
+          { name: "흙탕물", icon: "☕", correct: false }
+        ],
+        sepType: "word_hunt_fair",
+        sepTitle: "떠다니는 글씨 중 진짜 '기름'을 터치하세요!",
+        sepGuide: "색깔 힌트가 없습니다! 글자를 잘 읽고 진짜 '기름' 글자만 4번 쏙쏙 누르세요!",
+        craftType: "fry_timing",
+        craftTitle: "새우를 넣었다가 황금빛일 때 건져내기! 🍤",
+        craftGuide: "생새우를 팬에 넣고 지글지글 튀기다가, 딱 황금빛이 되었을 때 건지세요!",
+        rewardName: "바삭바삭 새우튀김 🍤",
+        rewardIcon: "🍤",
+        rewardDesc: "콩(혼합물)에서 <strong>식용유</strong>를 분리해냈기 때문에 높은 온도에서 바삭한 튀김 요리를 만들 수 있어요!"
+      },
+      {
+        targetItem: "철(쇠)",
+        targetIcon: "🔩",
+        sourceItem: "철광석(돌)",
+        options: [
+          { name: "나무줄기", icon: "🪵", correct: false },
+          { name: "철광석(돌)", icon: "🪨", correct: true },
+          { name: "고무나무", icon: "🌳", correct: false },
+          { name: "흙", icon: "🌰", correct: false }
+        ],
+        sepType: "coal_throw_moving_small", // 작아진 미니 용광로
+        sepTitle: "미니 용광로 입구로 석탄을 던져 넣기!",
+        sepGuide: "작아진 용광로가 위아래로 움직입니다! 석탄(⚫) 4개를 정확히 조준해 넣으세요!",
+        craftType: "bike_puzzle_9",
+        craftTitle: "철로 자전거 9조각 퍼즐 완성하기! 🚲",
+        craftGuide: "힌트 숫자가 없습니다! 자전거 그림 모양을 잘 관찰하여 9조각을 맞추세요!",
+        rewardName: "튼튼한 두 발 자전거 🚲",
+        rewardIcon: "🚲",
+        rewardDesc: "돌과 흙이 섞인 철광석에서 단단한 <strong>철</strong>을 분리했기 때문에 안전하고 튼튼한 자전거를 조립할 수 있어요!"
+      },
+      {
+        targetItem: "깨끗한 물",
+        targetIcon: "💧",
+        sourceItem: "흙탕물",
+        options: [
+          { name: "흙탕물", icon: "☕", correct: true },
+          { name: "탄산음료", icon: "🥤", correct: false },
+          { name: "식용유", icon: "🧴", correct: false },
+          { name: "반짝이 풀", icon: "✨", correct: false }
+        ],
+        sepType: "pour_drag",
+        sepTitle: "흙탕물 비커를 끌고 가 필터에 붓기!",
+        sepGuide: "비커(☕)를 손으로 잡고 정수기 필터(🧪) 위로 끌고 가 물을 부으세요!",
+        craftType: "lemonade_ratio", // 신규: 비율 맞춰 붓는 레모네이드 제조 게임!
+        craftTitle: "황금 비율로 레모네이드 만들기! 🍹",
+        craftGuide: "레시피에 맞춰 🍋 레몬즙 2컵과 💧 맑은 물 4컵을 저그로 끌고 가 부으세요!",
+        rewardName: "시원한 레모네이드 🍹",
+        rewardIcon: "🍹",
+        rewardDesc: "흙탕물(혼합물)에서 흙과 모래를 걸러내고 <strong>깨끗한 물</strong>을 분리했기 때문에 안심하고 음료를 만들어 마실 수 있어요!"
+      },
+      {
+        targetItem: "목화솜(면)",
+        targetIcon: "☁️",
+        sourceItem: "목화 꼬투리",
+        options: [
+          { name: "볏짚", icon: "🌾", correct: false },
+          { name: "목화 꼬투리", icon: "☁️", correct: true },
+          { name: "선인장", icon: "🌵", correct: false },
+          { name: "조개껍데기", icon: "🐚", correct: false }
+        ],
+        sepType: "flick_seed",
+        sepTitle: "목화 속 까만 씨앗을 밖으로 휙 던지기!",
+        sepGuide: "솜 속에 박힌 씨앗(🌰)을 손으로 잡아 목화 바깥으로 끌고 나가 튕겨내세요!",
+        craftType: "stitch_trace",
+        craftTitle: "굽은 점선을 따라 바느질 완성하기! 👕",
+        craftGuide: "바늘(🪡)을 꾹 잡고 옷감의 굽은 점선을 따라 끝까지 쭉 그려 바느질하세요!",
+        rewardName: "따뜻한 면 티셔츠 👕",
+        rewardIcon: "👕",
+        rewardDesc: "씨앗이 섞인 목화에서 순수한 <strong>면 섬유</strong>를 분리했기 때문에 부드러운 옷을 만들 수 있어요!"
+      }
+    ];
+
+    let currentStageIdx = 0;
+
+    // Web Audio 사운드 합성기
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSfx(type) {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+
+        if (type === 'snap') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(800, t);
+          osc.frequency.setValueAtTime(1400, t + 0.03);
+          gain.gain.setValueAtTime(0.25, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+          osc.start(t); osc.stop(t + 0.1);
+        } else if (type === 'revert') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(260, t);
+          osc.frequency.linearRampToValueAtTime(130, t + 0.12);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+          osc.start(t); osc.stop(t + 0.12);
+        } else if (type === 'whoosh') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(180, t);
+          osc.frequency.linearRampToValueAtTime(320, t + 0.09);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+          osc.start(t); osc.stop(t + 0.1);
+        } else if (type === 'pour') {
+          // 물 붓는 효과음
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, t);
+          osc.frequency.exponentialRampToValueAtTime(750, t + 0.12);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+          osc.start(t); osc.stop(t + 0.15);
+        } else if (type === 'fire') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(120, t);
+          osc.frequency.linearRampToValueAtTime(350, t + 0.15);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+          osc.start(t); osc.stop(t + 0.2);
+        } else if (type === 'sizzle') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(300, t);
+          gain.gain.setValueAtTime(0.15, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+          osc.start(t); osc.stop(t + 0.25);
+        } else if (type === 'stitch') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(900, t);
+          gain.gain.setValueAtTime(0.08, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+          osc.start(t); osc.stop(t + 0.04);
+        } else if (type === 'correct') {
+          osc.frequency.setValueAtTime(523, t);
+          osc.frequency.setValueAtTime(659, t + 0.08);
+          osc.frequency.setValueAtTime(783, t + 0.16);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+          osc.start(t); osc.stop(t + 0.35);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, t);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+          osc.start(t); osc.stop(t + 0.25);
+        } else if (type === 'fanfare') {
+          [523, 659, 783, 1046].forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            o.frequency.value = f;
+            g.gain.setValueAtTime(0.18, t + i*0.09);
+            g.gain.exponentialRampToValueAtTime(0.001, t + i*0.09 + 0.35);
+            o.start(t + i*0.09); o.stop(t + i*0.09 + 0.35);
+          });
+        }
+      } catch(e) {}
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function startGame() {
+      currentStageIdx = 0;
+      document.getElementById('top-bar').style.display = 'flex';
+      loadStage();
+    }
+    function restartGame() { startGame(); }
+
+    function loadStage() {
+      const stage = stages[currentStageIdx];
+      document.getElementById('stage-badge').textContent = `${currentStageIdx + 1}단계 / ${stages.length}단계`;
+      document.getElementById('quest-target-text').textContent = `${stage.targetItem}을(를) 얻어야 해! ${stage.targetIcon}`;
+      document.getElementById('quest-question').textContent = `어떤 혼합물에서 ${stage.targetItem}을(를) 분리할 수 있을까요?`;
+      document.getElementById('feedback-msg').textContent = '';
+
+      const container = document.getElementById('choice-container');
+      container.innerHTML = '';
+      const shuffled = [...stage.options].sort(() => Math.random() - 0.5);
+
+      shuffled.forEach(opt => {
+        const card = document.createElement('div');
+        card.className = 'choice-card';
+        card.innerHTML = `<div class="choice-icon">${opt.icon}</div><div class="choice-name">${opt.name}</div>`;
+        card.onclick = () => handleChoice(opt);
+        container.appendChild(card);
+      });
+
+      showScreen('screen-choose');
+    }
+
+    function handleChoice(opt) {
+      const stage = stages[currentStageIdx];
+      const feedback = document.getElementById('feedback-msg');
+
+      if (opt.correct) {
+        playSfx('correct');
+        startSeparationStep();
+      } else {
+        playSfx('wrong');
+        feedback.textContent = `앗! ${opt.name}에서는 ${stage.targetItem}을(를) 얻기 어려워요. 다시 골라보세요! 💡`;
+        feedback.classList.remove('shake');
+        void feedback.offsetWidth;
+        feedback.classList.add('shake');
+      }
+    }
+
+    // 범용 드래그 앤 드롭 헬퍼
+    function makeDraggable(el, onDropCheck) {
+      let isDragging = false;
+      let startX, startY;
+      let curX = 0, curY = 0;
+
+      el.style.touchAction = 'none';
+      el.style.cursor = 'grab';
+
+      function onDown(e) {
+        isDragging = true;
+        el.setPointerCapture(e.pointerId);
+        el.style.cursor = 'grabbing';
+        el.style.zIndex = '999';
+        startX = e.clientX - curX;
+        startY = e.clientY - curY;
+        el.style.transition = 'none';
+      }
+
+      function onMove(e) {
+        if (!isDragging) return;
+        curX = e.clientX - startX;
+        curY = e.clientY - startY;
+        el.style.transform = `translate(${curX}px, ${curY}px) scale(1.15)`;
+      }
+
+      function onUp(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        el.style.cursor = 'grab';
+        el.style.zIndex = '20';
+
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        const success = onDropCheck(cx, cy, el);
+        if (!success) {
+          el.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+          el.style.transform = 'translate(0px, 0px)';
+          curX = 0; curY = 0;
+          playSfx('revert');
+        }
+      }
+
+      el.addEventListener('pointerdown', onDown);
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
+    }
+
+    // ==========================================
+    // Step 2: 분리 인터랙션 미니게임
+    // ==========================================
+    let sepAnimFrame = null;
+
+    function startSeparationStep() {
+      const stage = stages[currentStageIdx];
+      document.getElementById('sep-title').textContent = stage.sepTitle;
+      document.getElementById('sep-guide').textContent = stage.sepGuide;
+      document.getElementById('sep-meter-fill').style.width = '0%';
+      document.getElementById('sep-meter-text').textContent = '분리 진행률: 0%';
+
+      const area = document.getElementById('sep-minigame-area');
+      area.innerHTML = '';
+      showScreen('screen-separate');
+
+      if (stage.sepType === 'timing_fixed') setupTimingFixed(area);
+      else if (stage.sepType === 'fan_drag') setupFanDragMinigame(area);
+      else if (stage.sepType === 'word_hunt_fair') setupWordHuntFairMinigame(area);
+      else if (stage.sepType === 'coal_throw_moving_small') setupCoalMovingSmallMinigame(area);
+      else if (stage.sepType === 'pour_drag') setupPourDragMinigame(area);
+      else if (stage.sepType === 'flick_seed') setupFlickSeedMinigame(area);
+    }
+
+    // 1. 타이밍 바
+    function setupTimingFixed(container) {
+      let hits = 0, pos = 0, dir = 1;
+      container.innerHTML = `
+        <div style="font-size:50px;">🎋 ➔ 🔥</div>
+        <div class="timing-track">
+          <div class="timing-zone-safe">적정 온도 (35%~65%)</div>
+          <div class="timing-needle" id="timingNeedle"></div>
+        </div>
+        <button class="btn-main" id="btnTimingFixed" style="background:#e17055; font-size:20px; padding:12px 36px;">
+          온도 조절 버튼! 🔥
+        </button>
+      `;
+
+      const needle = document.getElementById('timingNeedle');
+      function animate() {
+        pos += dir * 1.5;
+        if (pos >= 95) dir = -1;
+        if (pos <= 0) dir = 1;
+        needle.style.left = pos + '%';
+        sepAnimFrame = requestAnimationFrame(animate);
+      }
+      sepAnimFrame = requestAnimationFrame(animate);
+
+      document.getElementById('btnTimingFixed').onclick = () => {
+        if (pos >= 35 && pos <= 65) {
+          playSfx('correct');
+          hits++;
+          const pct = Math.round((hits / 3) * 100);
+          document.getElementById('sep-meter-fill').style.width = pct + '%';
+          document.getElementById('sep-meter-text').textContent = `분리 진행률: ${pct}% (적정온도 성공: ${hits}/3회!)`;
+
+          if (hits >= 3) {
+            cancelAnimationFrame(sepAnimFrame);
+            setTimeout(startCraftStep, 400);
+          }
+        } else {
+          playSfx('wrong');
+          document.getElementById('sep-meter-text').textContent = "앗! 빗나갔어요. 초록색 '적정 온도' 안에 바늘이 올 때 누르세요!";
+        }
+      };
+    }
+
+    // 2. 바닷물 부채질
+    function setupFanDragMinigame(container) {
+      let progress = 0, lastX = null, lastDir = 0;
+      container.innerHTML = `
+        <div style="position:relative; width:100%; max-width:420px; height:180px; background:#74b9ff; border-radius:18px; border:3px solid #0984e3; overflow:hidden; touch-action:none; display:flex; justify-content:center; align-items:center;" id="fanArena">
+          <div style="font-size:45px; position:absolute; bottom:10px; pointer-events:none;" id="saltPond">🌊 바닷물</div>
+          <div id="dragFan" style="position:absolute; font-size:65px; cursor:grab; touch-action:none;">🪭</div>
+        </div>
+        <div style="font-size:13px; color:#0984e3; font-weight:bold; margin-top:8px;">
+          부채(🪭)를 손으로 쥐고 좌우로 힘차게 저어 수증기를 날려보내세요!
+        </div>
+      `;
+
+      const fan = document.getElementById('dragFan');
+      const arena = document.getElementById('fanArena');
+      const pond = document.getElementById('saltPond');
+      let isHolding = false;
+
+      fan.addEventListener('pointerdown', (e) => {
+        isHolding = true;
+        fan.setPointerCapture(e.pointerId);
+        lastX = e.clientX;
+      });
+
+      arena.addEventListener('pointermove', (e) => {
+        if (!isHolding || progress >= 100) return;
+        const curX = e.clientX;
+        if (lastX !== null) {
+          const delta = curX - lastX;
+          fan.style.transform = `translateX(${Math.max(-140, Math.min(140, delta * 3))}px) rotate(${delta > 0 ? 25 : -25}deg)`;
+
+          if (Math.abs(delta) > 14) {
+            const dir = delta > 0 ? 1 : -1;
+            if (dir !== lastDir) {
+              lastDir = dir;
+              playSfx('whoosh');
+              progress += 8;
+              if (progress > 100) progress = 100;
+              document.getElementById('sep-meter-fill').style.width = progress + '%';
+              document.getElementById('sep-meter-text').textContent = `증발률: ${progress}% (소금 알갱이 형성 중!)`;
+
+              if (progress > 50) pond.textContent = "🌊 ➔ 🧂 소금 등장!";
+              if (progress >= 100) {
+                playSfx('correct');
+                setTimeout(startCraftStep, 500);
+              }
+            }
+          }
+        }
+        lastX = curX;
+      });
+
+      window.addEventListener('pointerup', () => {
+        isHolding = false;
+        fan.style.transform = `translateX(0px) rotate(0deg)`;
+      });
+    }
+
+    // 3. 기름 글자 사냥
+    function setupWordHuntFairMinigame(container) {
+      let oilCaught = 0;
+      container.innerHTML = `
+        <div class="word-hunt-arena" id="huntArena"></div>
+        <div style="font-size:13px; font-weight:bold; color:#d35400; margin-top:8px;">
+          모든 글자가 똑같이 생겼습니다! 글자를 정확히 읽고 <strong>'기름'</strong>만 4번 터치하세요!
+        </div>
+      `;
+
+      const arena = document.getElementById('huntArena');
+      const words = ["기름", "거름", "고름", "구름", "기름", "가름", "고름", "기름"];
+      const elements = [];
+
+      words.forEach((txt, idx) => {
+        const div = document.createElement('div');
+        div.className = 'hunt-word';
+        div.textContent = txt;
+        div.style.left = (15 + (idx % 4) * 95) + 'px';
+        div.style.top = (20 + Math.floor(idx / 4) * 80) + 'px';
+
+        div.onclick = () => {
+          if (txt === "기름") {
+            playSfx('correct');
+            oilCaught++;
+            div.style.transform = 'scale(1.3)';
+            div.style.background = '#dfe6e9';
+            setTimeout(() => {
+              div.style.transform = 'scale(1)';
+              div.style.background = 'white';
+            }, 200);
+
+            const pct = Math.round((oilCaught / 4) * 100);
+            document.getElementById('sep-meter-fill').style.width = pct + '%';
+            document.getElementById('sep-meter-text').textContent = `기름 추출: ${pct}% ('기름' ${oilCaught}/4개 포획!)`;
+
+            if (oilCaught >= 4) {
+              playSfx('fanfare');
+              setTimeout(startCraftStep, 450);
+            }
+          } else {
+            playSfx('wrong');
+            document.getElementById('sep-meter-text').textContent = `앗! '${txt}'은(는) 기름이 아니에요! 진짜 '기름'을 찾으세요!`;
+          }
+        };
+
+        arena.appendChild(div);
+        elements.push({ el: div, x: 20 + Math.random() * 320, y: 20 + Math.random() * 140, vx: (Math.random() - 0.5) * 2.5, vy: (Math.random() - 0.5) * 2.2 });
+      });
+
+      function moveWords() {
+        elements.forEach(item => {
+          item.x += item.vx;
+          item.y += item.vy;
+          if (item.x < 5 || item.x > 340) item.vx *= -1;
+          if (item.y < 5 || item.y > 155) item.vy *= -1;
+          item.el.style.left = item.x + 'px';
+          item.el.style.top = item.y + 'px';
+        });
+        if (oilCaught < 4) requestAnimationFrame(moveWords);
+      }
+      requestAnimationFrame(moveWords);
+    }
+
+    // ★ 1. 작아진 미니 용광로 (조준 난이도 UP!) ★
+    function setupCoalMovingSmallMinigame(container) {
+      let coalIn = 0;
+      let furnaceY = 20;
+      let furnaceDir = 1;
+      let furnaceAnim = null;
+
+      container.innerHTML = `
+        <div style="position:relative; width:100%; max-width:420px; height:200px; overflow:hidden; border:2px dashed #b2bec3; border-radius:18px; background:#f5f6fa;" id="furnaceArena">
+          <!-- 작고 날렵해진 미니 용광로 (90px x 95px) -->
+          <div id="furnaceDropMoving" style="position:absolute; left:45px; top:20px; width:90px; height:95px; border:3px dashed #e17055; border-radius:18px; background:#ffeaa7; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+            <span style="font-size:32px;" id="furnaceFlame">🔥</span>
+            <span style="font-size:11px; font-weight:bold; color:#d63031;">미니 용광로</span>
+          </div>
+
+          <!-- 석탄 4개 -->
+          <div style="position:absolute; right:40px; top:15px; display:flex; flex-direction:column; gap:8px;" id="coalBasket">
+            <div class="drag-piece coal-piece" style="width:44px; height:44px; font-size:20px; background:#2d3436; color:white; border-color:#000;">⚫</div>
+            <div class="drag-piece coal-piece" style="width:44px; height:44px; font-size:20px; background:#2d3436; color:white; border-color:#000;">⚫</div>
+            <div class="drag-piece coal-piece" style="width:44px; height:44px; font-size:20px; background:#2d3436; color:white; border-color:#000;">⚫</div>
+            <div class="drag-piece coal-piece" style="width:44px; height:44px; font-size:20px; background:#2d3436; color:white; border-color:#000;">⚫</div>
+          </div>
+        </div>
+        <div style="font-size:13px; font-weight:bold; color:#e17055; margin-top:6px;">
+          더 작아진 용광로가 움직입니다! 석탄(⚫)을 정확한 타이밍에 던져 넣으세요!
+        </div>
+      `;
+
+      const furnace = document.getElementById('furnaceDropMoving');
+      const flame = document.getElementById('furnaceFlame');
+      const coals = container.querySelectorAll('.coal-piece');
+
+      function animateFurnace() {
+        furnaceY += furnaceDir * 1.8;
+        if (furnaceY >= 85) furnaceDir = -1;
+        if (furnaceY <= 15) furnaceDir = 1;
+        furnace.style.top = furnaceY + 'px';
+        furnaceAnim = requestAnimationFrame(animateFurnace);
+      }
+      furnaceAnim = requestAnimationFrame(animateFurnace);
+
+      coals.forEach(c => {
+        makeDraggable(c, (cx, cy) => {
+          const r = furnace.getBoundingClientRect();
+          if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+            playSfx('fire');
+            c.style.display = 'none';
+            coalIn++;
+            flame.style.transform = `scale(${1 + coalIn * 0.25})`;
+            const pct = Math.round((coalIn / 4) * 100);
+            document.getElementById('sep-meter-fill').style.width = pct + '%';
+            document.getElementById('sep-meter-text').textContent = `화력 상승: ${pct}% (쇳물 분리 중!)`;
+
+            if (coalIn >= 4) {
+              cancelAnimationFrame(furnaceAnim);
+              playSfx('correct');
+              setTimeout(startCraftStep, 450);
+            }
+            return true;
+          }
+          return false;
+        });
+      });
+    }
+
+    // 5. 흙탕물 붓기
+    function setupPourDragMinigame(container) {
+      container.innerHTML = `
+        <div style="position:relative; width:100%; max-width:400px; height:180px; display:flex; justify-content:space-around; align-items:center;">
+          <div id="dragBeaker" class="drag-piece" style="width:75px; height:75px; font-size:40px;">☕</div>
+          <div id="filterTarget" style="width:110px; height:130px; border:3px dashed #0984e3; border-radius:18px; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#e8f4f8;">
+            <span style="font-size:40px;">🧪</span>
+            <span style="font-size:11px; font-weight:bold; color:#0984e3; margin-top:4px;">정수 필터</span>
+          </div>
+        </div>
+        <div style="font-size:13px; font-weight:bold; color:#0984e3;">흙탕물 비커(☕)를 잡고 정수 필터(🧪) 위로 끌고 가 부으세요!</div>
+      `;
+
+      const beaker = document.getElementById('dragBeaker');
+      const filter = document.getElementById('filterTarget');
+
+      makeDraggable(beaker, (cx, cy) => {
+        const r = filter.getBoundingClientRect();
+        if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+          beaker.style.transition = 'all 0.3s ease';
+          beaker.style.transform = 'rotate(-50deg) translate(-20px, -20px)';
+          filter.style.background = '#dff9fb';
+          filter.innerHTML = `<span style="font-size:40px;">💧</span><span style="font-size:11px; font-weight:bold; color:#00b894;">맑은 물 여과 성공!</span>`;
+          playSfx('snap');
+          document.getElementById('sep-meter-fill').style.width = '100%';
+          document.getElementById('sep-meter-text').textContent = "여과 완료! 깨끗한 물 분리 성공!";
+          setTimeout(startCraftStep, 600);
+          return true;
+        }
+        return false;
+      });
+    }
+
+    // 6. 목화씨 튕겨내기
+    function setupFlickSeedMinigame(container) {
+      let count = 4;
+      container.innerHTML = `
+        <div id="cottonBox" style="position:relative; width:220px; height:150px; background:#ffffff; border-radius:40px; border:4px solid #dfe6e9; display:flex; justify-content:center; align-items:center;">
+          <span style="font-size:80px;">☁️</span>
+          <div class="seed-flick" style="position:absolute; top:20px; left:40px; font-size:28px; cursor:grab; touch-action:none;">🌰</div>
+          <div class="seed-flick" style="position:absolute; top:30px; right:40px; font-size:28px; cursor:grab; touch-action:none;">🌰</div>
+          <div class="seed-flick" style="position:absolute; bottom:25px; left:50px; font-size:28px; cursor:grab; touch-action:none;">🌰</div>
+          <div class="seed-flick" style="position:absolute; bottom:30px; right:50px; font-size:28px; cursor:grab; touch-action:none;">🌰</div>
+        </div>
+        <div style="font-size:13px; font-weight:bold; color:#7f8c8d; margin-top:8px;">씨앗을 잡고 목화 밖으로 멀리 끌고 나가 튕겨내세요!</div>
+      `;
+
+      const seeds = container.querySelectorAll('.seed-flick');
+      const box = document.getElementById('cottonBox');
+
+      seeds.forEach(s => {
+        makeDraggable(s, (cx, cy) => {
+          const r = box.getBoundingClientRect();
+          if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) {
+            playSfx('snap');
+            s.style.display = 'none';
+            count--;
+            const pct = Math.round(((4 - count) / 4) * 100);
+            document.getElementById('sep-meter-fill').style.width = pct + '%';
+            document.getElementById('sep-meter-text').textContent = `씨앗 제거: ${pct}% 완료!`;
+
+            if (count === 0) {
+              playSfx('correct');
+              setTimeout(startCraftStep, 400);
+            }
+            return true;
+          }
+          return false;
+        });
+      });
+    }
+
+    // ==========================================
+    // Step 3: 활용 제작 미니게임
+    // ==========================================
+    function startCraftStep() {
+      const stage = stages[currentStageIdx];
+      document.getElementById('craft-title').textContent = stage.craftTitle;
+      document.getElementById('craft-guide').textContent = stage.craftGuide;
+      document.getElementById('craft-meter-fill').style.width = '0%';
+      document.getElementById('craft-meter-text').textContent = '제작 완료율: 0%';
+
+      const area = document.getElementById('craft-minigame-area');
+      area.innerHTML = '';
+      showScreen('screen-craft');
+
+      if (stage.craftType === 'cake_drag') setupCakeDragMinigame(area);
+      else if (stage.craftType === 'salt_shake') setupSaltShakeMinigame(area);
+      else if (stage.craftType === 'fry_timing') setupFryTimingMinigame(area);
+      else if (stage.craftType === 'bike_puzzle_9') setupBike9PuzzleMinigame(area);
+      else if (stage.craftType === 'lemonade_ratio') setupLemonadeRatioMinigame(area); // 신규: 비율 맞추기
+      else if (stage.craftType === 'stitch_trace') setupStitchTraceMinigame(area);
+    }
+
+    // 1. 자전거 9조각 퍼즐
+    function setupBike9PuzzleMinigame(container) {
+      let placedCount = 0;
+
+      const cvs = document.createElement('canvas');
+      cvs.width = 240; cvs.height = 180;
+      const c = cvs.getContext('2d');
+
+      c.fillStyle = '#74b9ff'; c.fillRect(0, 0, 240, 130);
+      c.fillStyle = '#b2bec3'; c.fillRect(0, 130, 240, 50);
+      c.fillStyle = '#dfe6e9'; c.fillRect(0, 150, 240, 6);
+
+      c.lineWidth = 7; c.strokeStyle = '#d63031'; c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(60, 130); c.lineTo(110, 85);
+      c.lineTo(160, 85); c.lineTo(180, 130);
+      c.moveTo(110, 85); c.lineTo(125, 130);
+      c.lineTo(60, 130);
+      c.lineTo(125, 130); c.lineTo(160, 85);
+      c.stroke();
+
+      c.lineWidth = 6; c.strokeStyle = '#2d3436'; c.fillStyle = '#ffffff';
+      c.beginPath(); c.arc(60, 130, 26, 0, Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(180, 130, 26, 0, Math.PI*2); c.fill(); c.stroke();
+
+      c.lineWidth = 2; c.strokeStyle = '#636e72';
+      c.beginPath();
+      c.moveTo(34, 130); c.lineTo(86, 130); c.moveTo(60, 104); c.lineTo(60, 156);
+      c.moveTo(154, 130); c.lineTo(206, 130); c.moveTo(180, 104); c.lineTo(180, 156);
+      c.stroke();
+
+      c.lineWidth = 6; c.strokeStyle = '#2d3436';
+      c.beginPath(); c.moveTo(160, 85); c.lineTo(155, 65); c.lineTo(170, 62); c.stroke();
+      c.fillStyle = '#2d3436'; c.fillRect(95, 80, 32, 8);
+
+      const imgUrl = cvs.toDataURL();
+
+      container.innerHTML = `
+        <div style="font-size:13px; font-weight:bold; color:#0984e3; margin-bottom:4px;">
+          자전거 9조각 퍼즐을 끌어다 맞추세요! (그림 모양을 관찰해 보세요)
+        </div>
+        <div class="puzzle-9-board" id="p9Board"></div>
+        <div class="puzzle-tray-9" id="p9Tray"></div>
+      `;
+
+      const board = document.getElementById('p9Board');
+      const tray = document.getElementById('p9Tray');
+
+      for (let i = 0; i < 9; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'puzzle-slot-9';
+        slot.dataset.idx = i;
+        board.appendChild(slot);
+      }
+
+      const pieceIndices = [...Array(9).keys()].sort(() => Math.random() - 0.5);
+
+      pieceIndices.forEach(idx => {
+        const row = Math.floor(idx / 3);
+        const col = idx % 3;
+
+        const piece = document.createElement('div');
+        piece.className = 'tray-piece-9';
+        piece.dataset.idx = idx;
+        piece.style.backgroundImage = `url(${imgUrl})`;
+        piece.style.backgroundPosition = `-${col * 80}px -${row * 60}px`;
+
+        makeDraggable(piece, (cx, cy) => {
+          const targetSlot = board.querySelector(`.puzzle-slot-9[data-idx="${idx}"]`);
+          const r = targetSlot.getBoundingClientRect();
+          const dist = Math.hypot(cx - (r.left + r.width/2), cy - (r.top + r.height/2));
+
+          if (dist < 40 && !targetSlot.classList.contains('filled')) {
+            playSfx('snap');
+            targetSlot.classList.add('filled');
+            targetSlot.style.backgroundImage = `url(${imgUrl})`;
+            targetSlot.style.backgroundPosition = `-${col * 80}px -${row * 60}px`;
+            piece.style.display = 'none';
+            placedCount++;
+
+            const pct = Math.round((placedCount / 9) * 100);
+            document.getElementById('craft-meter-fill').style.width = pct + '%';
+            document.getElementById('craft-meter-text').textContent = `9조각 퍼즐 완성도: ${pct}% (${placedCount}/9)`;
+
+            if (placedCount >= 9) {
+              playSfx('fanfare');
+              setTimeout(showSuccessScreen, 600);
+            }
+            return true;
+          }
+          return false;
+        });
+
+        tray.appendChild(piece);
+      });
+    }
+
+    // 2. 새우튀김 타이밍 요리
+    function setupFryTimingMinigame(container) {
+      let state = 'ready';
+      let timer = null;
+      let fryTime = 0;
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-around; align-items:center; width:100%; max-width:420px; height:150px;">
+          <div class="fry-pan" id="fryPanTarget">
+            <div style="font-size:55px;" id="panShrimp">🍲</div>
+            <div class="oil-bubbles" id="panStatus">기름 펄펄 끓는 중...</div>
+          </div>
+          <div id="dragRawShrimp" class="drag-piece" style="width:70px; height:70px; font-size:38px;">🦐</div>
+        </div>
+
+        <div style="width:100%; max-width:320px; height:12px; background:#dfe6e9; border-radius:8px; overflow:hidden; margin:8px auto; display:none;" id="fryBarWrap">
+          <div id="fryBar" style="width:0%; height:100%; background:#ffa502; transition:width 0.1s linear;"></div>
+        </div>
+
+        <button class="btn-main" id="btnScoop" style="display:none; background:#f39c12; font-size:18px; padding:10px 24px;">🥢 집게로 쏙 건지기!</button>
+        <div style="font-size:13px; font-weight:bold; color:#e17055; margin-top:6px;" id="fryInstruction">
+          생새우(🦐)를 펄펄 끓는 팬으로 끌고 가 넣으세요!
+        </div>
+      `;
+
+      const shrimp = document.getElementById('dragRawShrimp');
+      const pan = document.getElementById('fryPanTarget');
+      const panShrimp = document.getElementById('panShrimp');
+      const panStatus = document.getElementById('panStatus');
+      const btnScoop = document.getElementById('btnScoop');
+      const barWrap = document.getElementById('fryBarWrap');
+      const bar = document.getElementById('fryBar');
+      const instruction = document.getElementById('fryInstruction');
+
+      makeDraggable(shrimp, (cx, cy) => {
+        const r = pan.getBoundingClientRect();
+        if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom && state === 'ready') {
+          playSfx('sizzle');
+          shrimp.style.display = 'none';
+          state = 'frying';
+          fryTime = 0;
+          panShrimp.textContent = '🦐 (튀기는 중...)';
+          panStatus.textContent = '지글지글... 아직 덜 익었어요!';
+          panStatus.style.color = '#ffa502';
+          btnScoop.style.display = 'inline-block';
+          btnScoop.textContent = '🥢 집게로 쏙 건지기!';
+          btnScoop.style.background = '#f39c12';
+          barWrap.style.display = 'block';
+          instruction.textContent = "황금빛으로 변했을 때 [집게로 쏙 건지기]를 누르세요!";
+
+          timer = setInterval(() => {
+            fryTime += 0.1;
+            const pct = Math.min(100, (fryTime / 5.5) * 100);
+            bar.style.width = pct + '%';
+
+            if (fryTime < 1.8) {
+              state = 'frying';
+              panShrimp.textContent = '🦐 (튀기는 중...)';
+              panStatus.textContent = '지글지글... 아직 덜 익었어요!';
+              panStatus.style.color = '#ffa502';
+              bar.style.background = '#ffa502';
+            } else if (fryTime >= 1.8 && fryTime <= 4.5) {
+              state = 'golden';
+              panShrimp.textContent = '🍤 (바삭한 황금빛!)';
+              panStatus.textContent = '✨ 지금이에요! 얼른 건져내세요! ✨';
+              panStatus.style.color = '#2ed573';
+              bar.style.background = '#2ed573';
+            } else {
+              state = 'burnt';
+              panShrimp.textContent = '🖤 (까맣게 탐)';
+              panStatus.textContent = '앗! 너무 오래 튀겨서 타버렸어요! 😭';
+              panStatus.style.color = '#ff4757';
+              bar.style.background = '#ff4757';
+              btnScoop.textContent = '새우 다시 넣기 🔄';
+              btnScoop.style.background = '#e74c3c';
+              clearInterval(timer);
+            }
+          }, 100);
+
+          return true;
+        }
+        return false;
+      });
+
+      btnScoop.onclick = () => {
+        if (state === 'golden') {
+          clearInterval(timer);
+          playSfx('fanfare');
+          panShrimp.textContent = '🍤 황금 새우튀김 완성!';
+          panStatus.textContent = '완벽한 타이밍에 튀겨냈습니다!';
+          document.getElementById('craft-meter-fill').style.width = '100%';
+          document.getElementById('craft-meter-text').textContent = '새우튀김 제작 완료!';
+          btnScoop.style.display = 'none';
+          barWrap.style.display = 'none';
+          setTimeout(showSuccessScreen, 600);
+        } else if (state === 'burnt') {
+          clearInterval(timer);
+          setupFryTimingMinigame(container);
+        } else if (state === 'frying') {
+          playSfx('wrong');
+          panStatus.textContent = '앗! 아직 덜 튀겨졌어요! 황금빛이 될 때까지 기다리세요!';
+        }
+      };
+    }
+
+    // ★ 5. 신규: 황금 비율 레모네이드 계량 미니게임 (레몬즙 2컵 + 맑은 물 4컵) ★
+    function setupLemonadeRatioMinigame(container) {
+      let lemonCups = 0;
+      let waterCups = 0;
+      const targetLemon = 2;
+      const targetWater = 4;
+
+      container.innerHTML = `
+        <!-- 레시피 보드 -->
+        <div class="recipe-board">
+          <span id="lemonBadge">🍋 레몬즙 [0 / 2컵]</span>
+          <span style="color:#b2bec3;">|</span>
+          <span id="waterBadge">💧 맑은 물 [0 / 4컵]</span>
+        </div>
+
+        <div class="pour-station">
+          <!-- 레몬즙 컵 (드래그 가능) -->
+          <div id="dragLemonCup" class="drag-piece" style="font-size:32px; width:70px; height:70px;">
+            🍋
+            <span style="font-size:10px; font-weight:bold; color:#f39c12;">레몬즙</span>
+          </div>
+
+          <!-- 중앙 레모네이드 피처 저그 (목표 지점) -->
+          <div class="jug-target" id="jugTarget">
+            <div class="jug-liquid" id="jugLiquid">0컵</div>
+          </div>
+
+          <!-- 맑은 물 컵 (드래그 가능) -->
+          <div id="dragWaterCup" class="drag-piece" style="font-size:32px; width:70px; height:70px;">
+            💧
+            <span style="font-size:10px; font-weight:bold; color:#0984e3;">맑은 물</span>
+          </div>
+        </div>
+
+        <div style="font-size:13px; font-weight:bold; color:#0984e3; margin-top:6px;" id="ratioHint">
+          레몬즙 컵(🍋)과 물 컵(💧)을 저그로 끌고 가 차례대로 부으세요!
+        </div>
+      `;
+
+      const lemonCup = document.getElementById('dragLemonCup');
+      const waterCup = document.getElementById('dragWaterCup');
+      const jug = document.getElementById('jugTarget');
+      const jugLiquid = document.getElementById('jugLiquid');
+      const lemonBadge = document.getElementById('lemonBadge');
+      const waterBadge = document.getElementById('waterBadge');
+      const hint = document.getElementById('ratioHint');
+
+      function updateJug() {
+        const total = lemonCups + waterCups;
+        const pct = Math.round((total / (targetLemon + targetWater)) * 100);
+        jugLiquid.style.height = pct + '%';
+        jugLiquid.textContent = `${total} / 6컵`;
+        document.getElementById('craft-meter-fill').style.width = pct + '%';
+        document.getElementById('craft-meter-text').textContent = `황금비율 계량 진행도: ${pct}%`;
+
+        lemonBadge.textContent = `🍋 레몬즙 [${lemonCups} / ${targetLemon}컵] ${lemonCups === targetLemon ? '✅' : ''}`;
+        waterBadge.textContent = `💧 맑은 물 [${waterCups} / ${targetWater}컵] ${waterCups === targetWater ? '✅' : ''}`;
+
+        if (lemonCups === targetLemon && waterCups === targetWater) {
+          playSfx('fanfare');
+          jug.style.borderColor = '#2ed573';
+          jugLiquid.style.background = '#2ed573';
+          jugLiquid.textContent = '🍹 완벽한 황금비율!';
+          hint.textContent = '완벽한 비율로 상큼 달콤한 레모네이드가 완성되었습니다!';
+          hint.style.color = '#2ed573';
+          setTimeout(showSuccessScreen, 700);
+        }
+      }
+
+      // 레몬즙 붓기
+      makeDraggable(lemonCup, (cx, cy) => {
+        const r = jug.getBoundingClientRect();
+        if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+          if (lemonCups < targetLemon) {
+            lemonCups++;
+            playSfx('pour');
+            updateJug();
+            hint.textContent = `레몬즙 1컵 투하! (총 ${lemonCups}컵)`;
+            return false; // 다음 컵도 부어야 하므로 원위치 복귀
+          } else {
+            playSfx('wrong');
+            hint.textContent = '레몬즙은 2컵으로 충분해요! 이제 맑은 물(💧)을 부으세요!';
+            return false;
+          }
+        }
+        return false;
+      });
+
+      // 맑은 물 붓기
+      makeDraggable(waterCup, (cx, cy) => {
+        const r = jug.getBoundingClientRect();
+        if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+          if (waterCups < targetWater) {
+            waterCups++;
+            playSfx('pour');
+            updateJug();
+            hint.textContent = `깨끗한 물 1컵 투하! (총 ${waterCups}컵)`;
+            return false; // 다음 컵도 부어야 하므로 원위치 복귀
+          } else {
+            playSfx('wrong');
+            hint.textContent = '물은 4컵으로 충분해요! 레몬즙(🍋) 양을 확인하세요!';
+            return false;
+          }
+        }
+        return false;
+      });
+    }
+
+    // 케이크 장식 드래그
+    function setupCakeDragMinigame(container) {
+      let placed = 0;
+      container.innerHTML = `
+        <div style="position:relative; width:220px; height:120px; background:#ffeaa7; border-radius:24px; border:4px solid #fdcb6e; display:flex; justify-content:space-around; align-items:center;">
+          <div class="drop-slot-cake" style="width:60px; height:60px; border:2px dashed #e17055; border-radius:12px; display:flex; justify-content:center; align-items:center; font-size:11px;" data-item="syrup">설탕 자리🍬</div>
+          <div class="drop-slot-cake" style="width:60px; height:60px; border:2px dashed #e17055; border-radius:12px; display:flex; justify-content:center; align-items:center; font-size:11px;" data-item="berry">딸기 자리🍓</div>
+          <div class="drop-slot-cake" style="width:60px; height:60px; border:2px dashed #e17055; border-radius:12px; display:flex; justify-content:center; align-items:center; font-size:11px;" data-item="candle">촛불 자리🕯️</div>
+        </div>
+
+        <div style="display:flex; gap:14px; justify-content:center; margin-top:14px;">
+          <div class="drag-piece" data-item="syrup">🍬</div>
+          <div class="drag-piece" data-item="berry">🍓</div>
+          <div class="drag-piece" data-item="candle">🕯️</div>
+        </div>
+      `;
+
+      const pieces = container.querySelectorAll('.drag-piece');
+      pieces.forEach(p => {
+        makeDraggable(p, (cx, cy) => {
+          const itemType = p.getAttribute('data-item');
+          const targetSlot = container.querySelector(`.drop-slot-cake[data-item="${itemType}"]`);
+          const r = targetSlot.getBoundingClientRect();
+          const dist = Math.hypot(cx - (r.left + r.width/2), cy - (r.top + r.height/2));
+
+          if (dist < 45 && !targetSlot.classList.contains('assembled')) {
+            playSfx('snap');
+            targetSlot.classList.add('assembled');
+            targetSlot.innerHTML = p.innerHTML;
+            targetSlot.style.border = '2px solid #00b894';
+            p.style.visibility = 'hidden';
+            placed++;
+            const pct = Math.round((placed / 3) * 100);
+            document.getElementById('craft-meter-fill').style.width = pct + '%';
+            document.getElementById('craft-meter-text').textContent = `케이크 완성도: ${pct}%`;
+            if (placed >= 3) {
+              playSfx('fanfare');
+              setTimeout(showSuccessScreen, 500);
+            }
+            return true;
+          }
+          return false;
+        });
+      });
+    }
+
+    // 배추 소금통 드래그
+    function setupSaltShakeMinigame(container) {
+      let count = 0;
+      container.innerHTML = `
+        <div style="position:relative; width:100%; max-width:380px; height:150px; display:flex; justify-content:space-around; align-items:center;">
+          <div id="targetCabbage" style="font-size:75px; border:3px dashed #00b894; border-radius:20px; padding:10px;">🥬</div>
+          <div id="dragSalt" class="drag-piece" style="font-size:42px; width:75px; height:75px;">🧂</div>
+        </div>
+        <div style="font-size:13px; font-weight:bold; color:#00b894;">소금통(🧂)을 끌고 가 배추(🥬) 위를 쓱싹 문지르세요!</div>
+      `;
+
+      const salt = document.getElementById('dragSalt');
+      const cabbage = document.getElementById('targetCabbage');
+
+      makeDraggable(salt, (cx, cy) => {
+        const r = cabbage.getBoundingClientRect();
+        if (cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) {
+          playSfx('whoosh');
+          count++;
+          cabbage.style.transform = `scale(${1 + count * 0.05})`;
+          const pct = Math.min(100, count * 34);
+          document.getElementById('craft-meter-fill').style.width = pct + '%';
+          document.getElementById('craft-meter-text').textContent = `절임 진행도: ${pct}%`;
+
+          if (count >= 3) {
+            playSfx('fanfare');
+            setTimeout(showSuccessScreen, 400);
+            return true;
+          }
+        }
+        return false;
+      });
+    }
+
+    // 바느질 곡선 따라 그리기
+    function setupStitchTraceMinigame(container) {
+      container.innerHTML = `
+        <div class="stitch-canvas-wrap">
+          <canvas id="sewCanvas" width="360" height="180"></canvas>
+        </div>
+        <div style="font-size:13px; font-weight:bold; color:#0984e3; margin-top:6px;">
+          바늘(🪡)을 꾹 잡고 굽은 점선을 따라 끝까지 쭉 그려 바느질하세요!
+        </div>
+      `;
+
+      const cvs = document.getElementById('sewCanvas');
+      const ctx = cvs.getContext('2d');
+
+      const waypoints = [];
+      for (let t = 0; t <= 1; t += 0.04) {
+        const x = Math.pow(1-t, 3)*35 + 3*Math.pow(1-t, 2)*t*110 + 3*(1-t)*Math.pow(t, 2)*240 + Math.pow(t, 3)*325;
+        const y = Math.pow(1-t, 3)*90 + 3*Math.pow(1-t, 2)*t*25 + 3*(1-t)*Math.pow(t, 2)*155 + Math.pow(t, 3)*90;
+        waypoints.push({ x, y });
+      }
+
+      let currentStep = 0;
+      let isTracing = false;
+
+      function drawSeam() {
+        ctx.clearRect(0, 0, 360, 180);
+
+        ctx.fillStyle = '#6c5ce7';
+        ctx.fillRect(0, 0, 360, 180);
+
+        ctx.beginPath();
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        for (let i = 0; i < waypoints.length; i++) {
+          if (i === 0) ctx.moveTo(waypoints[i].x, waypoints[i].y);
+          else ctx.lineTo(waypoints[i].x, waypoints[i].y);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.setLineDash([8, 4]);
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#ffeaa7';
+        for (let i = 0; i <= currentStep; i++) {
+          if (i === 0) ctx.moveTo(waypoints[i].x, waypoints[i].y);
+          else ctx.lineTo(waypoints[i].x, waypoints[i].y);
+        }
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        const currPt = waypoints[currentStep];
+        ctx.font = '28px sans-serif';
+        ctx.fillText('🪡', currPt.x - 14, currPt.y + 10);
+      }
+
+      drawSeam();
+
+      function handleTrace(clientX, clientY) {
+        if (currentStep >= waypoints.length - 1) return;
+        const rect = cvs.getBoundingClientRect();
+        const scaleX = cvs.width / rect.width;
+        const scaleY = cvs.height / rect.height;
+        const cx = (clientX - rect.left) * scaleX;
+        const cy = (clientY - rect.top) * scaleY;
+
+        const nextPt = waypoints[currentStep + 1];
+        const dist = Math.hypot(cx - nextPt.x, cy - nextPt.y);
+
+        if (dist < 32) {
+          currentStep++;
+          playSfx('stitch');
+          drawSeam();
+
+          const pct = Math.round((currentStep / (waypoints.length - 1)) * 100);
+          document.getElementById('craft-meter-fill').style.width = pct + '%';
+          document.getElementById('craft-meter-text').textContent = `바느질 진행도: ${pct}%`;
+
+          if (currentStep >= waypoints.length - 1) {
+            playSfx('fanfare');
+            setTimeout(showSuccessScreen, 500);
+          }
+        }
+      }
+
+      cvs.onpointerdown = (e) => {
+        isTracing = true;
+        cvs.setPointerCapture(e.pointerId);
+        handleTrace(e.clientX, e.clientY);
+      };
+      cvs.onpointermove = (e) => {
+        if (isTracing) handleTrace(e.clientX, e.clientY);
+      };
+      cvs.onpointerup = () => { isTracing = false; };
+    }
+
+    // Step 4: 보상 화면
+    function showSuccessScreen() {
+      const stage = stages[currentStageIdx];
+      document.getElementById('reward-icon').textContent = stage.rewardIcon;
+      document.getElementById('reward-name').textContent = stage.rewardName;
+      document.getElementById('reward-desc').innerHTML = stage.rewardDesc;
+      showScreen('screen-success');
+    }
+
+    function nextStage() {
+      currentStageIdx++;
+      if (currentStageIdx < stages.length) {
+        loadStage();
+      } else {
+        showEndingScreen();
+      }
+    }
+
+    // Step 5: 최종 배움공책 정리 표
+    function showEndingScreen() {
+      document.getElementById('top-bar').style.display = 'none';
+      const body = document.getElementById('summary-body');
+      body.innerHTML = '';
+
+      stages.forEach(st => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${st.sourceItem}</strong></td>
+          <td style="color:#0984e3; font-weight:bold;">${st.targetIcon} ${st.targetItem}</td>
+          <td><strong>${st.rewardName}</strong></td>
+        `;
+        body.appendChild(tr);
+      });
+
+      playSfx('fanfare');
+      showScreen('screen-ending');
+    }
+  </script>
+</body>
+</html>
